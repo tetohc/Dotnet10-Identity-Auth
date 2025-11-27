@@ -1,4 +1,4 @@
-namespace IdentityNET10.Models
+namespace IdentityNET10.Models.ViewModels
 {
     public class ErrorViewModel
     {
