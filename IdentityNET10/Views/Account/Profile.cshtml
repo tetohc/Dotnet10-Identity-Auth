@@ -1,0 +1,98 @@
+﻿@model IdentityNET10.Models.Entities.AppUser
+
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8 col-xl-6">
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+
+                <h3 class="text-center mb-4 fw-bold">
+                    <i class="bi bi-person-badge-fill me-2 text-primary"></i> Perfil de Usuario
+                </h3>
+
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-person-fill me-1 text-primary"></i> Nombre
+                        </label>
+                        <div class="form-control bg-light">
+                            @Model.Name
+                        </div>
+                    </div>
+
+                    <div class="col-md-12">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-envelope-fill me-1 text-primary"></i> Correo electrónico
+                        </label>
+                        <div class="form-control bg-light">
+                            @Model.Email
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-flag-fill me-1 text-primary"></i> Código de país
+                        </label>
+                        <div class="form-control bg-light">
+                            +@Model.CountryCode
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-geo-alt-fill me-1 text-primary"></i> País
+                        </label>
+                        <div class="form-control bg-light">
+                            @Model.Country
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-building me-1 text-primary"></i> Ciudad
+                        </label>
+                        <div class="form-control bg-light">
+                            @Model.City
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-house-door-fill me-1 text-primary"></i> Dirección
+                        </label>
+                        <div class="form-control bg-light">
+                            @Model.Address
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-calendar-event-fill me-1 text-primary"></i> Fecha de nacimiento
+                        </label>
+                        <div class="form-control bg-light">
+                            @Model.Birthdate.ToString("yyyy-MM-dd")
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-check-circle-fill me-1 text-primary"></i> Estado
+                        </label>
+                        <div class="form-control bg-light">
+                            @(Model.IsActive ? "Activo" : "Inactivo")
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="d-grid mt-4">
+                    <a asp-controller="Account" asp-action="Manage" class="btn btn-primary btn-lg shadow-sm">
+                        <i class="bi bi-pencil-square me-2"></i> Editar Perfil
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
