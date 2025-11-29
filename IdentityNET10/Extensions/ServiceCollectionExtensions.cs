@@ -1,6 +1,9 @@
 ﻿using IdentityNET10.Data;
 using IdentityNET10.Models.Entities;
+using IdentityNET10.Services;
+using IdentityNET10.Settings;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace IdentityNET10.Extensions
@@ -50,7 +53,7 @@ namespace IdentityNET10.Extensions
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.Lockout.AllowedForNewUsers = true;
-                
+
                 // opciones de usuario
                 options.User.RequireUniqueEmail = true;
 
@@ -87,5 +90,22 @@ namespace IdentityNET10.Extensions
             return services;
         }
 
+        /// <summary>
+        /// Registra la configuración de EmailSettings usando el Options Pattern.
+        /// </summary>
+        public static IServiceCollection AddEmailSettings(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+            return services;
+        }
+
+        /// <summary>
+        /// Registra los servicios de la aplicación.
+        /// </summary>
+        public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+        {
+            services.AddTransient<IEmailSender, EmailSender>();
+            return services;
+        }
     }
 }

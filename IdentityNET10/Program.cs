@@ -7,6 +7,8 @@ builder.Services
     .AddPersistence(builder.Configuration)
     .AddIdentityServices()
     .AddAuthenticationCookieSettings()
+    .AddEmailSettings(builder.Configuration)
+    .AddApplicationServices()
     .AddControllersWithViews();
 
 var app = builder.Build();
