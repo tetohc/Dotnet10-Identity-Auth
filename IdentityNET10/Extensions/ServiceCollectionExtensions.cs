@@ -58,7 +58,7 @@ namespace IdentityNET10.Extensions
                 options.User.RequireUniqueEmail = true;
 
                 // opciones de inicio de sesión
-                options.SignIn.RequireConfirmedEmail = false;
+                options.SignIn.RequireConfirmedEmail = true;
                 options.SignIn.RequireConfirmedPhoneNumber = false;
                 options.SignIn.RequireConfirmedAccount = false;
             });
