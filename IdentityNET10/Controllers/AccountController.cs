@@ -52,8 +52,14 @@ namespace IdentityNET10.Controllers
             IdentityResult result = await _userManager.CreateAsync(user, model.Password.Trim());
             if (result.Succeeded)
             {
-                //await _signInManager.SignInAsync(user, isPersistent: false);
-                return RedirectToAction("Login", "Account");
+                // Enviar correo de confirmación de cuenta al usuario
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                var tokenEncoded = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                var confirmationUrl = Url.Action("ConfirmEmail", "Account", new { id = user.Id, token = tokenEncoded }, Request.Scheme);
+                var html = EmailTemplates.ConfirmEmailTemplate(confirmationUrl!, user.Name);
+                await _emailService.SendEmailAsync(user.Email, "Confirmar correo electrónico", html);
+
+                return RedirectToAction(nameof(RegisterConfirmation));
             }
             return View(model);
         }
@@ -70,6 +76,16 @@ namespace IdentityNET10.Controllers
         {
             if (!ModelState.IsValid)
                 return View(model);
+
+            var user = await _userManager.FindByEmailAsync(model.Email.Trim());
+            if (user is null)
+            {
+                ModelState.AddModelError(string.Empty, "Credenciales de acceso incorrectas.");
+                return View(model);
+            }
+
+            if (!user!.EmailConfirmed)
+                return RedirectToAction(nameof(EmailNotConfirmed));
 
             var result = await _signInManager.PasswordSignInAsync(model.Email.Trim(), model.Password.Trim(), model.RememberMe, lockoutOnFailure: false);
             if (result.Succeeded)
@@ -89,6 +105,47 @@ namespace IdentityNET10.Controllers
             await _signInManager.SignOutAsync();
             return RedirectToAction("Login", "Account");
         }
+
+        #region Confirmar Correo Electrónico
+
+        [HttpGet]
+        public IActionResult RegisterConfirmation()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ConfirmEmail(string id, string token)
+        {
+            if (string.IsNullOrEmpty(id) || string.IsNullOrEmpty(token))
+                return RedirectToAction(nameof(ConfirmEmailError));
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user is null)
+                return RedirectToAction(nameof(ConfirmEmailError));
+
+            var tokenDecodedBytes = WebEncoders.Base64UrlDecode(token);
+            var tokenDecoded = Encoding.UTF8.GetString(tokenDecodedBytes);
+            var result = await _userManager.ConfirmEmailAsync(user, tokenDecoded);
+            if (!result.Succeeded)
+                return RedirectToAction(nameof(ConfirmEmailError));
+
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult ConfirmEmailError()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult EmailNotConfirmed()
+        {
+            return View();
+        }
+
+        #endregion Confirmar Correo Electrónico
 
         #endregion Registro e Inicio de sesión
 
