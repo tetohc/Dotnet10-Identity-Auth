@@ -7,6 +7,7 @@ builder.Services
     .AddPersistence(builder.Configuration)
     .AddIdentityServices()
     .AddAuthenticationCookieSettings()
+    .AddExternalAuthentication(builder.Configuration)
     .AddEmailSettings(builder.Configuration)
     .AddApplicationServices()
     .AddControllersWithViews();
@@ -18,6 +19,7 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
 }
+app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseAuthentication();

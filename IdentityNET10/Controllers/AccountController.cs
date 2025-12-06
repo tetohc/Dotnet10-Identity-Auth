@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using System.Security.Claims;
 using System.Text;
 
 namespace IdentityNET10.Controllers
@@ -14,15 +15,18 @@ namespace IdentityNET10.Controllers
         private readonly UserManager<AppUser> _userManager;
         private readonly SignInManager<AppUser> _signInManager;
         private readonly IEmailSender _emailService;
+        private readonly ILogger<AccountController> _logger;
 
-        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IEmailSender emailSender)
+        public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager, IEmailSender emailSender,
+           ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _emailService = emailSender;
+            _logger = logger;
         }
 
-        #region Registro e Inicio de sesión
+        #region Registro de usuarios
 
         [HttpGet]
         public IActionResult SignUp()
@@ -52,7 +56,6 @@ namespace IdentityNET10.Controllers
             IdentityResult result = await _userManager.CreateAsync(user, model.Password.Trim());
             if (result.Succeeded)
             {
-                // Enviar correo de confirmación de cuenta al usuario
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
                 var tokenEncoded = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
                 var confirmationUrl = Url.Action("ConfirmEmail", "Account", new { id = user.Id, token = tokenEncoded }, Request.Scheme);
@@ -63,6 +66,10 @@ namespace IdentityNET10.Controllers
             }
             return View(model);
         }
+
+        #endregion Registro de usuarios
+
+        #region Inicio de sesión interno
 
         [HttpGet]
         public IActionResult Login(string? returnUrl)
@@ -106,6 +113,93 @@ namespace IdentityNET10.Controllers
             return RedirectToAction("Login", "Account");
         }
 
+        #endregion Inicio de sesión interno
+
+        #region Inicio de sesión externo
+
+        [HttpPost]
+        public async Task<IActionResult> ExternalLogin(string provider, string? returnUrl)
+        {
+            var redirectUrl = Url.Action("ExternalLoginCallback", "Account", new { returnUrl });
+            var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+            return Challenge(properties, provider);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
+        {
+            returnUrl ??= Url.Content("~/");
+            if (remoteError is not null)
+            {
+                _logger.LogWarning($"Error del proveedor externo: {remoteError}");
+                return RedirectToAction(nameof(Login));
+            }
+
+            var info = await _signInManager.GetExternalLoginInfoAsync();
+            if (info is null)
+                return RedirectToAction(nameof(Login));
+
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false);
+            if (result.Succeeded)
+                return LocalRedirect(returnUrl);
+
+            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+            var name = info.Principal.FindFirstValue(ClaimTypes.Name);
+            if (email is null)
+                return RedirectToAction(nameof(Login));
+
+            var user = new AppUser
+            {
+                UserName = email,
+                Email = email,
+                Name = name ?? email,
+                EmailConfirmed = true,
+                IsActive = true,
+                Address = string.Empty,
+                City = string.Empty,
+                Country = string.Empty,
+                CountryCode = 0,
+            };
+            var identityResult = await _userManager.CreateAsync(user);
+            if (!identityResult.Succeeded)
+            {
+                foreach (var error in identityResult.Errors)
+                    _logger.LogWarning($"Error: {error.Description}");
+                return RedirectToAction(nameof(Login));
+            }
+
+            identityResult = await _userManager.AddLoginAsync(user, info);
+            if (!identityResult.Succeeded)
+            {
+                foreach (var error in identityResult.Errors)
+                    _logger.LogWarning($"Error: {error.Description}");
+                return RedirectToAction(nameof(Login));
+            }
+
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            var model = new ExternalLoginConfirmationViewModel
+            {
+                Email = user.Email,
+                ReturnUrl = returnUrl,
+                Provider = info.LoginProvider
+            };
+            return View("ExternalLoginConfirmation", model);
+        }
+
+        [HttpGet]
+        public IActionResult ExternalLoginConfirmation(ExternalLoginConfirmationViewModel model)
+        {
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ConfirmExternalLogin(string returnUrl)
+        {
+            return LocalRedirect(returnUrl ?? "~/");
+        }
+
+        #endregion Inicio de sesión externo
+
         #region Confirmar Correo Electrónico
 
         [HttpGet]
@@ -146,8 +240,6 @@ namespace IdentityNET10.Controllers
         }
 
         #endregion Confirmar Correo Electrónico
-
-        #endregion Registro e Inicio de sesión
 
         #region Usuario
 
