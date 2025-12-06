@@ -91,6 +91,22 @@ namespace IdentityNET10.Extensions
         }
 
         /// <summary>
+        /// Registra y configura la autenticación externa (Facebook, Google, etc.)
+        /// </summary>
+        public static IServiceCollection AddExternalAuthentication(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.AddAuthentication()
+                .AddFacebook(options =>
+                {
+                    options.AppId = configuration["Authentication:Facebook:AppId"]!;
+                    options.AppSecret = configuration["Authentication:Facebook:AppSecret"]!;
+                    options.Scope.Add("email");
+                    options.AccessDeniedPath = "/Account/Login";
+                });
+            return services;
+        }
+
+        /// <summary>
         /// Registra la configuración de EmailSettings usando el Options Pattern.
         /// </summary>
         public static IServiceCollection AddEmailSettings(this IServiceCollection services, IConfiguration configuration)

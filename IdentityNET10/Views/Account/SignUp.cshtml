@@ -1,4 +1,6 @@
-﻿@model IdentityNET10.Models.ViewModels.SignUpViewModel
+﻿@using IdentityNET10.Extensions
+@using IdentityNET10.Models.Enums
+@model IdentityNET10.Models.ViewModels.SignUpViewModel
 
 <div class="row justify-content-center mt-4">
     <div class="col-lg-8 col-xl-6">
@@ -67,13 +69,12 @@
                             <input asp-for="City" class="form-control" placeholder="Costa Rica" />
                             <span asp-validation-for="City" class="text-danger small"></span>
                         </div>
-                        
+
                         <div class="col-md-12">
                             <label asp-for="Address" class="form-label fw-semibold"></label>
                             <textarea asp-for="Address" class="form-control" rows="3" placeholder="Dirección completa"></textarea>
                             <span asp-validation-for="Address" class="text-danger small"></span>
                         </div>
-
                     </div>
                     <div class="d-grid mt-4">
                         <button type="submit" class="btn btn-primary btn-lg shadow-sm">
@@ -81,6 +82,15 @@
                         </button>
                     </div>
                 </form>
+                <div class="text-center mt-4">
+                    <form asp-controller="Account" asp-action="ExternalLogin" method="POST">
+                        <input type="hidden" name="provider" value="@ExternalProvider.Facebook.GetDisplayName()" />
+                        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                        <button type="submit" class="btn btn-outline-primary btn-lg w-100 shadow-sm">
+                            <i class="bi bi-facebook me-2"></i> Registrarse con Facebook
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
