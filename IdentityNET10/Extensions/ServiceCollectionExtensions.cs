@@ -102,6 +102,14 @@ namespace IdentityNET10.Extensions
                     options.AppSecret = configuration["Authentication:Facebook:AppSecret"]!;
                     options.Scope.Add("email");
                     options.AccessDeniedPath = "/Account/Login";
+                })
+                .AddGoogle(options =>
+                {
+                    options.ClientId = configuration["Authentication:Google:ClientId"]!;
+                    options.ClientSecret = configuration["Authentication:Google:ClientSecret"]!;
+                    options.Scope.Add("email");
+                    options.AccessDeniedPath = "/Account/Login";
+                    options.CallbackPath = "/signin-google";
                 });
             return services;
         }

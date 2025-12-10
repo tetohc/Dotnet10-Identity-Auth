@@ -12,6 +12,7 @@ namespace IdentityNET10.Extensions
             return provider switch
             {
                 ExternalProvider.Facebook => "Facebook",
+                ExternalProvider.Google => "Google",
                 _ => provider.ToString()
             };
         }

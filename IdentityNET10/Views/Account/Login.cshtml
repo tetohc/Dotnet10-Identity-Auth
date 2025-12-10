@@ -46,7 +46,6 @@
                         </button>
                     </div>
                 </form>
-
                 <div class="text-center mt-4">
                     <form asp-controller="Account" asp-action="ExternalLogin" method="POST">
                         <input type="hidden" name="provider" value="@ExternalProvider.Facebook.GetDisplayName()" />
@@ -56,7 +55,15 @@
                         </button>
                     </form>
                 </div>
-
+                <div class="text-center mt-4">
+                    <form asp-controller="Account" asp-action="ExternalLogin" method="POST">
+                        <input type="hidden" name="provider" value="@ExternalProvider.Google.GetDisplayName()" />
+                        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+                        <button type="submit" class="btn btn-outline-primary btn-lg w-100 shadow-sm">
+                            <i class="bi bi-google me-2"></i> Iniciar sesión con Google
+                        </button>
+                    </form>
+                </div>
                 <div class="text-center mt-4">
                     <a asp-controller="Account" asp-action="ForgotPassword" class="text-decoration-none">
                         <i class="bi bi-question-circle me-1"></i> ¿Olvidaste tu contraseña?
