@@ -1,4 +1,5 @@
-﻿using IdentityNET10.Models.Entities;
+﻿using IdentityNET10.Extensions;
+using IdentityNET10.Models.Entities;
 using IdentityNET10.Models.ViewModels;
 using IdentityNET10.Templates;
 using Microsoft.AspNetCore.Identity;
@@ -87,7 +88,7 @@ namespace IdentityNET10.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email.Trim());
             if (user is null)
             {
-                ModelState.AddModelError(string.Empty, "Credenciales de acceso incorrectas.");
+                _logger.LogWarning($"Intento de inicio de sesión fallido para el usuario {model.Email}.");
                 return View(model);
             }
 
@@ -99,10 +100,43 @@ namespace IdentityNET10.Controllers
             {
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
-
                 return RedirectToAction("Index", "Home");
             }
-            ModelState.AddModelError(string.Empty, "Credenciales de acceso incorrectas.");
+            else if (result.RequiresTwoFactor)
+                return RedirectToAction(nameof(LoginWith2fa), new { returnUrl, rememberMe = model.RememberMe });
+
+            _logger.LogWarning($"Intento de inicio de sesión fallido para el usuario {model.Email}.");
+            return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult LoginWith2fa(string? returnUrl, bool rememberMe)
+        {
+            var model = new TwoFactorLoginViewModel
+            {
+                ReturnUrl = returnUrl ?? Url.Content("~/"),
+                RememberMe = rememberMe
+            };
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> LoginWith2fa(TwoFactorLoginViewModel model)
+        {
+            if (!ModelState.IsValid)
+                return View(model);
+
+            var code = model.Code.Replace(" ", string.Empty).Replace("-", string.Empty);
+            var result = await _signInManager.TwoFactorAuthenticatorSignInAsync(
+                code,
+                model.RememberMe,
+                model.RememberDevice
+            );
+
+            if (result.Succeeded)
+                return Redirect(model.ReturnUrl ?? Url.Content("~/"));
+
+            _logger.LogWarning("Código de autenticación de dos factores inválido.");
             return View(model);
         }
 
@@ -329,5 +363,123 @@ namespace IdentityNET10.Controllers
         }
 
         #endregion Restablecer Contraseña
+
+        #region Autenticación en Dos Factores (2FA)
+
+        /// <summary>
+        /// Prepara la configuración de la autenticación de dos factores (2FA) para el usuario actual.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> SetupTwoFactorAuth()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null)
+                return RedirectToAction(nameof(Login), "Account");
+
+            var key = await _userManager.GetAuthenticatorKeyAsync(user);
+            if (string.IsNullOrEmpty(key))
+            {
+                await _userManager.ResetAuthenticatorKeyAsync(user);
+                key = await _userManager.GetAuthenticatorKeyAsync(user);
+            }
+
+            var qrCodeUri = key!.ToQrCodeUri(user.Email!);
+            var model = new TwoFactorAuthViewModel
+            {
+                KeySecret = key!.ToReadableFormat(),
+                CodeQR = qrCodeUri!.GenerateQrCodeImage(),
+            };
+            return View(model);
+        }
+
+        /// <summary>
+        /// Activa la autenticación de dos factores (2FA) para el usuario actual después de verificar el código proporcionado.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> EnableTwoFactorAuth(TwoFactorAuthViewModel model)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null)
+                return RedirectToAction(nameof(Login), "Account");
+
+            var token = model.VerificationCode.Replace(" ", string.Empty).Replace("-", string.Empty);
+            var isValid = await _userManager.VerifyTwoFactorTokenAsync(
+                user,
+                _userManager.Options.Tokens.AuthenticatorTokenProvider,
+                token
+            );
+            if (!isValid)
+            {
+                _logger.LogWarning("Código de verificación inválido.");
+                return View(nameof(SetupTwoFactorAuth), model);
+            }
+
+            await _userManager.SetTwoFactorEnabledAsync(user, true);
+            var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+            TempData["RecoveryCodes"] = recoveryCodes!.ToList();
+            return RedirectToAction(nameof(ConfirmTwoFactorAuth), "Account", new { codes = recoveryCodes!.ToList() });
+        }
+
+        /// <summary>
+        /// Muestra los códigos de recuperación generados después de habilitar la autenticación de dos factores (2FA).
+        /// </summary>
+        [HttpGet]
+        public IActionResult ConfirmTwoFactorAuth(IEnumerable<string> codes)
+        {
+            ViewBag.RecoveryCodes = codes;
+            return View();
+        }
+
+        /// <summary>
+        /// Muestra el estado de la autenticación de dos factores (2FA) para el usuario actual.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> TwoFactorAuthStatusViewModel()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null)
+                return NotFound();
+
+            var model = await TwoFactorAuthExtensions.BuildTwoFactorStatusAsync(_userManager, _signInManager, user);
+            if (TempData["RecoveryCodes"] is string[] codes)
+                model.RecoveryCodes = codes;
+
+            return View(model);
+        }
+
+        /// <summary>
+        /// Desactiva la autenticación de dos factores (2FA) para el usuario actual.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> DisableTwoFactorAuth()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null)
+                return NotFound();
+
+            var result = await _userManager.SetTwoFactorEnabledAsync(user, false);
+            if (!result.Succeeded)
+                _logger.LogWarning("Error al deshabilitar la autenticación de dos factores.");
+
+            await _userManager.ResetAuthenticatorKeyAsync(user);
+            return RedirectToAction(nameof(TwoFactorAuthStatusViewModel));
+        }
+
+        /// <summary>
+        /// Genera nuevos códigos de recuperación para la autenticación de dos factores (2FA) del usuario actual.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> GenerateRecoveryCodes()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user is null)
+                return RedirectToAction(nameof(Login), "Account");
+
+            var recoveryCodes = await _userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+            TempData["RecoveryCodes"] = recoveryCodes!.ToArray();
+            return RedirectToAction(nameof(TwoFactorAuthStatusViewModel), "Account");
+        }
+
+        #endregion Autenticación en Dos Factores (2FA)
     }
 }

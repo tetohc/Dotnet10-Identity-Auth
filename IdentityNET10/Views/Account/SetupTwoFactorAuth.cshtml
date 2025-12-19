@@ -1,0 +1,68 @@
+﻿@model IdentityNET10.Models.ViewModels.TwoFactorAuthViewModel
+
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-6 col-xl-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h3 class="text-center mb-4 fw-bold">
+                    <i class="bi bi-shield-lock-fill me-2"></i> Configurar Autenticación en Dos Pasos
+                </h3>
+                <div class="alert alert-info text-center shadow-sm">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Para mayor seguridad, activa la autenticación en dos pasos.
+                    Puedes copiar la clave en tu aplicación de autenticación o escanear el código QR.
+                </div>
+                <div class="mb-4 text-center">
+                    <label class="form-label fw-semibold">Clave secreta</label>
+                    <div class="bg-light border rounded p-3 fw-bold fs-5 d-inline-block shadow-sm">
+                        @Model.KeySecret
+                    </div>
+                </div>
+                <div class="mb-4 text-center">
+                    <label class="form-label fw-semibold">Código QR</label>
+                    <br />
+                    <div class="d-inline-block p-3 border rounded bg-white shadow-sm">
+                        @if (!string.IsNullOrEmpty(Model.CodeQR))
+                        {
+                            <img src="@Model.CodeQR" alt="Código QR para 2FA" class="img-fluid" style="max-width: 250px;" />
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning text-center">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                No se pudo generar el código QR. Copia la clave manualmente en tu aplicación de autenticación.
+                            </div>
+                        }
+                    </div>
+                </div>
+                <form asp-action="EnableTwoFactorAuth" method="POST">
+                    <div class="mb-3">
+                        <label for="VerificationCode" class="form-label fw-semibold">Código de verificación</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-key-fill"></i>
+                            </span>
+                            <input type="text" name="VerificationCode" id="VerificationCode"
+                                   class="form-control" placeholder="Ingresa el código generado" />
+                        </div>
+                        <span class="text-danger small" asp-validation-for="VerificationCode"></span>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                            <i class="bi bi-check-circle me-2"></i> Verificar y Activar
+                        </button>
+                    </div>
+                </form>
+                <div class="text-center mt-4">
+                    <a asp-controller="Account" asp-action="Login" class="text-decoration-none">
+                        <i class="bi bi-arrow-left-circle me-1"></i> Volver al inicio de sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

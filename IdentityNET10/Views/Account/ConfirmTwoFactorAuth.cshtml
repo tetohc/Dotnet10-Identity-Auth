@@ -1,0 +1,63 @@
+﻿@{
+    var recoveryCodes = ViewBag.RecoveryCodes as List<string>;
+}
+
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8 col-xl-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4 text-center">
+                <h3 class="mb-4 fw-bold">
+                    <i class="bi bi-shield-check me-2"></i> Autenticación en Dos Pasos Activada
+                </h3>
+                <div class="alert alert-success shadow-sm">
+                    <i class="bi bi-check-circle me-2"></i>
+                    ¡Tu cuenta ahora está protegida con autenticación en dos pasos!
+                </div>
+                <p class="mt-3 fw-semibold">
+                    Guarda estos códigos de recuperación en un lugar seguro.
+                    Podrás usarlos si pierdes acceso a tu aplicación de autenticación.
+                </p>
+                @if (recoveryCodes != null && recoveryCodes.Any())
+                {
+                    <div class="bg-light border rounded p-4 shadow-sm mt-4">
+                        <h5 class="fw-bold mb-3 text-primary">
+                            <i class="bi bi-key me-2"></i> Códigos de recuperación
+                        </h5>
+                        <p class="text-muted mb-4">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Usa cada código solo una vez. Guárdalos en un lugar seguro.
+                        </p>
+                        <div class="row g-3">
+                            @foreach (var code in recoveryCodes)
+                            {
+                                <div class="col-md-6">
+                                    <div class="card border-0 shadow-sm h-100">
+                                        <div class="card-body text-center p-3">
+                                            <div class="fw-bold fs-5 text-dark">@code</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="alert alert-warning mt-4 text-start">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Recuerda: si pierdes tu aplicación de autenticación, estos códigos son tu acceso de emergencia.
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-warning mt-4">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        No se pudieron generar los códigos de recuperación. Intenta nuevamente.
+                    </div>
+                }
+                <div class="d-grid mt-4">
+                    <a asp-controller="Account" asp-action="Profile" class="btn btn-primary btn-lg shadow-sm">
+                        <i class="bi bi-person-circle me-2"></i> Ir a mi perfil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
