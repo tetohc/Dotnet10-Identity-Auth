@@ -1,0 +1,66 @@
+﻿@model IdentityNET10.Models.ViewModels.TwoFactorLoginViewModel
+
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-6 col-xl-6">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <h3 class="text-center mb-4 fw-bold">
+                    <i class="bi bi-shield-lock-fill me-2"></i> Autenticación en Dos Pasos
+                </h3>
+                <div class="alert alert-info text-center shadow-sm">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Ingresa el código generado por tu aplicación de autenticación para continuar.
+                </div>
+                <form asp-controller="Account" asp-action="LoginWith2fa" method="POST">
+                    <input type="hidden" asp-for="ReturnUrl" />
+
+                    <div class="mb-3">
+                        <label asp-for="Code" class="form-label fw-semibold">
+                            <i class="bi bi-key-fill me-1"></i> Código de autenticación
+                        </label>
+                        <div class="input-group justify-content-center">
+                            <input asp-for="Code"
+                                   class="form-control text-center fs-4 fw-bold shadow-sm"
+                                   placeholder="######"
+                                   maxlength="6"
+                                   pattern="\d{6}"
+                                   inputmode="numeric"
+                                   style="letter-spacing: 0.5rem; max-width: 250px;" />
+                        </div>
+                        <span asp-validation-for="Code" class="text-danger small"></span>
+                        <div class="form-text text-muted text-center mt-2">
+                            Ingresa los <strong>6 dígitos</strong> generados por tu aplicación de autenticación.
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input asp-for="RememberDevice" class="form-check-input" />
+                        <label asp-for="RememberDevice" class="form-check-label">
+                            <i class="bi bi-laptop me-1"></i> Recordar este dispositivo
+                        </label>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input asp-for="RememberMe" class="form-check-input" />
+                        <label asp-for="RememberMe" class="form-check-label">
+                            <i class="bi bi-person-check me-1"></i> Recordar sesión
+                        </label>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                            <i class="bi bi-check-circle me-2"></i> Confirmar acceso
+                        </button>
+                    </div>
+                </form>
+                <div class="text-center mt-4">
+                    <a asp-controller="Account" asp-action="Login" class="text-decoration-none">
+                        <i class="bi bi-arrow-left-circle me-1"></i> Volver al inicio de sesión
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

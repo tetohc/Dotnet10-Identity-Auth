@@ -60,7 +60,10 @@ namespace IdentityNET10.Extensions
                 // opciones de inicio de sesión
                 options.SignIn.RequireConfirmedEmail = true;
                 options.SignIn.RequireConfirmedPhoneNumber = false;
-                options.SignIn.RequireConfirmedAccount = false;
+                options.SignIn.RequireConfirmedAccount = true;
+
+                // opciones de autenticación de dos factores
+                options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;
             });
             return services;
         }

@@ -6,11 +6,37 @@
 <ul class="navbar-nav ms-auto align-items-center">
     @if (SignInManager.IsSignedIn(User))
     {
+        var user = await UserManager.GetUserAsync(User);
+        var twoFactorEnabled = await UserManager.GetTwoFactorEnabledAsync(user!);
+
         <li class="nav-item me-2">
             <a class="nav-link fw-semibold text-primary" asp-controller="Account" asp-action="Profile">
-                <i class="bi bi-person-circle me-1"></i> @UserManager.GetUserName(User)
+                <i class="bi bi-person-circle me-1"></i> @user?.Name
             </a>
         </li>
+
+        @if (twoFactorEnabled)
+        {
+            <li class="nav-item me-2">
+                <span class="badge bg-success">
+                    <i class="bi bi-shield-lock-fill me-1"></i> 2FA Activo
+                </span>
+            </li>
+            <li class="nav-item me-2">
+                <a class="btn btn-outline-primary btn-sm" asp-controller="Account" asp-action="TwoFactorAuthStatusViewModel">
+                    <i class="bi bi-shield-lock-fill me-1"></i> Administrar 2FA
+                </a>
+            </li>
+        }
+        else
+        {
+            <li class="nav-item me-2">
+                <a class="btn btn-outline-success btn-sm" asp-controller="Account" asp-action="SetupTwoFactorAuth">
+                    <i class="bi bi-shield-plus me-1"></i> Activar 2FA
+                </a>
+            </li>
+        }
+
         <li class="nav-item">
             <form id="logoutForm" asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
                 <button type="submit" class="btn btn-outline-danger btn-sm">
